@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>فرزون - المساعد الذكي</title>
+    
+    <meta name="theme-color" content="#F8F9FA">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <img src="/img/farzoon.png" alt="فرزون" class="loader-logo" onerror="this.src='/img/final look.png'">
+            <p>جاري تجهيز فرزون 🤖</p>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <!-- Chat Header -->
+        <header class="chat-header">
+            <div class="header-info">
+                <div class="avatar">
+                    <img src="/img/final look.png" alt="فرزون" class="avatar-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <span style="display:none; font-size: 24px;">🤖</span>
+                </div>
+                <div class="header-text">
+                    <h1 class="chat-title">فرزون</h1>
+                    <p class="chat-status">متصل الآن</p>
+                </div>
+            </div>
+            <div class="header-actions" style="position: relative;">
+                <svg id="options-btn" viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="options-icon" style="cursor: pointer;"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                
+                <div id="options-menu" class="options-menu hidden">
+                    <button id="about-farzoon-btn" class="menu-item">🤖 تعريف عن فرزون</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Messages Area -->
+        <main class="chat-messages" id="chat-messages">
+            <!-- Messages injected dynamically -->
+        </main>
+
+        <!-- Quick Suggestions (Chips) Area -->
+        <div class="quick-suggestions-wrapper" id="suggestions-wrapper">
+            <div class="scroll-hint">اسحب للمزيد 👈</div>
+            <div class="quick-suggestions-container">
+                <div class="quick-suggestions" id="quick-suggestions">
+                    <!-- Chips injected dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="chat-input-area">
+            <div class="input-wrapper">
+                <input type="text" id="user-input" placeholder="اكتب رسالتك هنا..." autocomplete="off">
+            </div>
+            <button id="send-btn" aria-label="إرسال" disabled>
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
