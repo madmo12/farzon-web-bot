@@ -13,16 +13,17 @@ const knowledgeBase = {
     "👕 يعني ايه كساء؟": "👕 **الكساء**:\nدي الهدوم اللي جودتها ممتازة وشبه الجديدة. بنوزعها **مجاناً** مرتين في السنة على الأسر عشان نفرحهم في المناسبات 🌟",
     "🛍️ المعارض يعني ايه؟": "🛍️ **المعارض**:\nدي هدوم حالتها كويسة بس اتلبست قبل كده. بنعمل بيها معارض بأسعار رمزية جداً عشان نحافظ على كرامة الناس.\n💡 الفلوس دي بترجع للجمعية عشان نشتري بيها هدوم جديدة للأسر 👌",
     "♻️ التالف بيعمل ايه؟": "♻️ **التالف**:\nدي الهدوم المقطعة. بنبيعها لعمال بيستفيدوا من (الزراير والسوست)، والباقي بيروح مصانع تدوير لخيوط.\n💡 يعني مفيش حاجة عندنا بتترمي، والعائد بيرجع يفيدنا تاني! 😎",
-    
+
+    "👤 مسؤول فرزاوي": "مسؤول فرزاوي هو مروان 🎯",
     "👤 مسؤول الفرز": "بطل الفرز؟ ده معاذ 📦💪",
     "📱 مسؤول الميديا": "مسؤول الميديا؟ ده علي 🎬🔥",
     "🏢 مسؤول الباك يارد": "اللي ماسكة الباك يارد؟ دي هاجر 🏢👌",
-    "🤝 مسؤول HR": "مسؤول الـ HR؟ دي ايمان 🤝 وريماس بتساعدها كنائب 🌟",
+    "🤝 مسؤول HR": "مسؤول الـ HR؟ دي ايمان 🤝 وريماس نائب 🌟",
     "🏢 مسؤول المشاريع": "اللي ماسكة المشاريع؟ دي أميرة ",
     "🏢 مسؤول المخازن": "بطل المخازن؟ ده يس 📦🫡",
-    
+
     "⏰ مواعيد الفرز": "خدها مني على السريع 👇\nإحنا موجودين كل يوم من 11 الصبح لـ 6 المغرب، **ماعدا يوم الجمعة**.\nمكانا فين؟ في الباك يارد ياريس 📍",
-    
+
     "🤖 انت مين؟": "أنا فرزون 🤖 صاحبك ومساعدك الذكي اللي هنا يجاوبك على أي حاجة تخص الفرز في رسالة 😎",
     "⚙️ بتعمل ايه؟": "مهمتي أوفر عليك وقتك! أي حاجة عايز تعرفها عن المواعيد، المسؤولين، أو نظام الفرز... أنا موجود أقولهالك في ثانية ⚡"
 };
@@ -45,19 +46,9 @@ function normalize(text) {
 }
 
 function detectIntent(normalizedInput) {
-    // Priority 1: Farzawi
-    if (normalizedInput.includes('فرزاوي')) {
-        return { type: 'FARZAWI' };
-    }
-
-    // Priority 2: All Roles
-    const allRoles = ['مسؤولين اللجنه', 'مسئولين اللجنه', 'تيم الفرز', 'فريق الفرز', 'الناس بتاعت الفرز', 'كلهم', 'كله', 'الكل', 'المسؤولين كلهم', 'عاوزهم كلهم'];
-    if (allRoles.some(kw => normalizedInput.includes(kw))) {
-        return { type: 'ALL_ROLES' };
-    }
-
-    // Priority 3: SPECIFIC ROLES (Must be checked before generic "مسؤول" check)
+    // Priority 1: SPECIFIC ROLES (Must be checked before generic "مسؤول" check and events)
     const roleIntents = [
+        { key: "👤 مسؤول فرزاوي", keywords: ['مسؤول فرزاوي', 'مسئول فرزاوي', 'مين فرزاوي', 'بتاع فرزاوي', 'مين مسئول فرزاوي'] },
         { key: "👤 مسؤول الفرز", keywords: ['مسؤول الفرز', 'مسئول الفرز', 'مين في الفرز', 'رئيس الفرز', 'بتاع الفرز'] },
         { key: "📱 مسؤول الميديا", keywords: ['ميديا', 'الميديا', 'تصوير'] },
         { key: "🏢 مسؤول الباك يارد", keywords: ['باك يارد', 'باكيارد'] },
@@ -69,7 +60,24 @@ function detectIntent(normalizedInput) {
         if (intent.keywords.some(kw => normalizedInput.includes(kw))) return { type: 'KNOWLEDGE', key: intent.key };
     }
 
-    // Priority 4: Generic Clarification
+    // Priority 2: Farzawi Event
+    if (normalizedInput.includes('فرزاوي')) {
+        return { type: 'FARZAWI' };
+    }
+
+    // Priority 3: Opinion
+    const opinionKeywords = ['كويس', 'حلو', 'وحش', 'ولا لا', 'احسن'];
+    if (opinionKeywords.some(kw => normalizedInput.includes(kw)) || normalizedInput.split(' ').includes('ولا')) {
+        return { type: 'OPINION' };
+    }
+
+    // Priority 4: All Roles
+    const allRoles = ['مسؤولين اللجنه', 'مسئولين اللجنه', 'تيم الفرز', 'فريق الفرز', 'الناس بتاعت الفرز', 'كلهم', 'كله', 'الكل', 'المسؤولين كلهم', 'عاوزهم كلهم'];
+    if (allRoles.some(kw => normalizedInput.includes(kw))) {
+        return { type: 'ALL_ROLES' };
+    }
+
+    // Priority 4.5: Generic Clarification
     const genericRoleKeywords = ['مسؤول', 'مسئول', 'مين ماسك', 'مين رئيس', 'المسؤولين', 'اللجنه'];
     if (genericRoleKeywords.some(kw => normalizedInput.includes(kw))) {
         return { type: 'CLARIFY_ROLE' };
@@ -97,7 +105,7 @@ function detectIntent(normalizedInput) {
     // Priority 7: Greeting
     const howAreYou = ['عامل ايه', 'اخبارك', 'ازيك', 'كيفك'];
     if (howAreYou.some(kw => normalizedInput.includes(kw))) return { type: 'GREETING_HOW_ARE_YOU' };
-    
+
     const hello = ['اهلا', 'سلام', 'هاي', 'مرحبا', 'صباح', 'مسا'];
     if (hello.some(kw => normalizedInput.includes(kw))) return { type: 'GREETING_HELLO' };
 
@@ -119,8 +127,17 @@ function getResponse(text) {
     let finalResponse = "";
 
     switch (intent.type) {
+        case 'OPINION':
+            const opinionResponses = [
+                "بص يا معلم 😎<br>الفرز من أحلى اللجان بصراحة، شغل مفيد وجو حلو والناس فيه زي الفل 👌<br>بس في الآخر جرب بنفسك وشوف أنت ترتاح فين 💪",
+                "الفرز جامد والله 🔥<br>بس برضه كل لجنة ليها جوها، انزل وجرب وانت اللي هتحكم 😉"
+            ];
+            finalResponse = opinionResponses[Math.floor(Math.random() * opinionResponses.length)];
+            userContext.lastIntent = 'opinion';
+            break;
+
         case 'FARZAWI':
-            finalResponse = "فرزاوي واقفة مؤقتًا دلوقتي لحد ما أبطالنا يخلصوا امتحاناتهم 💪🔥";
+            finalResponse = "فرزاوي واقفة مؤقتًا لحد ما أبطالنا يخلصوا امتحاناتهم 💪🔥";
             userContext.lastIntent = 'farzawi';
             break;
 
@@ -172,13 +189,13 @@ function getResponse(text) {
 
 function getAllRolesText() {
     return "بص يا نجم 😎 دي لستة بكل المسؤولين 👇:<br><br>" +
-           knowledgeBase["👤 مسؤول الفرز"] + "<br>" +
-           knowledgeBase["📱 مسؤول الميديا"] + "<br>" +
-           knowledgeBase["🏢 مسؤول المشاريع"] + "<br>" +
-           knowledgeBase["🏢 مسؤول الباك يارد"] + "<br>" +
-           knowledgeBase["🤝 مسؤول HR"].replace(/\n/g, '<br>') + "<br>" +
-           knowledgeBase["🏢 مسؤول المخازن"] + "<br>" +
-           "ومسؤول **فرزاوي**؟ ده مروان 🎉";
+        knowledgeBase["👤 مسؤول الفرز"] + "<br>" +
+        knowledgeBase["📱 مسؤول الميديا"] + "<br>" +
+        knowledgeBase["🏢 مسؤول المشاريع"] + "<br>" +
+        knowledgeBase["🏢 مسؤول الباك يارد"] + "<br>" +
+        knowledgeBase["🤝 مسؤول HR"].replace(/\n/g, '<br>') + "<br>" +
+        knowledgeBase["🏢 مسؤول المخازن"] + "<br>" +
+        "ومسؤول **فرزاوي**؟ ده مروان 🎉";
 }
 
 
@@ -196,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             loadingScreen.classList.add('hidden');
             setTimeout(() => loadingScreen.remove(), 500); // Remove from DOM after transition
         }
-        
+
         // Init UI & First Message
         initSuggestions();
         setTimeout(() => {
@@ -275,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const typingIndicator = showTypingIndicator();
         const delay = Math.floor(Math.random() * 800) + 800; // Snappier response
-        
+
         setTimeout(() => {
             typingIndicator.remove();
             const botReply = getResponse(text);
@@ -293,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addMessage(htmlContent, sender) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}-message`;
-        
+
         let avatarHtml = '';
         if (sender === 'bot') {
             avatarHtml = `<img src="./img/final-look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./img/farzoon.png'; this.onerror=null;">`;
@@ -308,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="message-time">${timeString}</div>
             </div>
         `;
-        
+
         chatMessages.appendChild(messageDiv);
         scrollToBottom();
     }
