@@ -463,7 +463,14 @@ body {
     font-size: 0.95rem;
     font-family: inherit;
     outline: none;
-    max-height: 100px;
+    max-height: 120px;
+    resize: none;
+    overflow-y: auto;
+    scrollbar-width: none;
+}
+
+#user-input::-webkit-scrollbar {
+    display: none;
 }
 
 #send-btn {
