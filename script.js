@@ -89,6 +89,18 @@ function detectIntent(normalizedInput) {
         return { type: 'KNOWLEDGE', key: '⏰ مواعيد الفرز' };
     }
 
+    // Priority 5.5: Categories
+    const categoryKeywords = ['تصنيفات', 'تقسيم', 'بتقسموا', 'المعارض فيها ايه', 'انواع الهدوم'];
+    if (categoryKeywords.some(kw => normalizedInput.includes(kw))) {
+        return { type: 'CATEGORIES_GENERAL' };
+    }
+    if (normalizedInput.includes('حريمي')) {
+        return { type: 'CATEGORIES_HAREMY' };
+    }
+    if (normalizedInput.includes('شتوي')) {
+        return { type: 'CATEGORIES_WINTER' };
+    }
+
     // Priority 6: Sorting Knowledge
     const sortingIntents = [
         { key: "🤖 انت مين؟", keywords: ['انت مين', 'اسمك', 'عرفني بنفسك', 'مين فرزون', 'من انت'] },
@@ -134,6 +146,21 @@ function getResponse(text) {
             ];
             finalResponse = opinionResponses[Math.floor(Math.random() * opinionResponses.length)];
             userContext.lastIntent = 'opinion';
+            break;
+
+        case 'CATEGORIES_GENERAL':
+            finalResponse = "بص يا معلم 👌<br>احنا بنقسم الهدوم لـ 3 حاجات:<br><br>1️⃣ كساء<br>2️⃣ معارض<br>3️⃣ تالف<br><br>طيب المعارض فيها ايه؟ 👇<br><br>• حريمي<br>• رجالي<br>• اطفال<br>• احذية<br>• شنط<br>• مفروشات<br>• بدل<br>• عرايس<br>• مدارس<br>• تالف جينز<br>• زيادات<br>• شتوي (ده بيبقى موجود في الصيف)<br>• طرح<br>• مواليد<br><br>يعني كل حاجة ليها تصنيف عشان توصل صح للي محتاجها 💪";
+            userContext.lastIntent = 'categories';
+            break;
+
+        case 'CATEGORIES_HAREMY':
+            finalResponse = "الحريمي يا سيدي هو أي لبس بناتي أو حريمي بينزل المعارض 👗<br>بنعزله لوحده عشان يتفرز ويتجهز صح 👌";
+            userContext.lastIntent = 'categories_haremy';
+            break;
+
+        case 'CATEGORIES_WINTER':
+            finalResponse = "سؤال حلو! الشتوي بيطلع في الصيف عشان بيتم تخزينه للموسم بتاعه ❄️<br>بنجهزه ونعينه عشان اول ما الشتا يدخل يكون جاهز يتوزع في المعارض أو الكساء 💪";
+            userContext.lastIntent = 'categories_winter';
             break;
 
         case 'FARZAWI':
