@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let avatarHtml = '';
         if (sender === 'bot') {
-            avatarHtml = `<img src="/img/final look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='/img/farzoon.png'; this.onerror=null;">`;
+            avatarHtml = `<img src="./img/final-look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./img/farzoon.png'; this.onerror=null;">`;
         }
 
         const timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const typingDiv = document.createElement('div');
         typingDiv.className = 'typing-indicator-wrapper';
         typingDiv.innerHTML = `
-            <img src="/img/final look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='/img/farzoon.png'; this.onerror=null;">
+            <img src="./img/final-look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./img/farzoon.png'; this.onerror=null;">
             <div class="typing-indicator">
                 <div class="typing-dot"></div>
                 <div class="typing-dot"></div>
