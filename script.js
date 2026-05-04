@@ -5,16 +5,24 @@
 // ================== STATE (CONTEXT MEMORY) ==================
 let userContext = {
     lastIntent: null,
-    lastTopic: null
+    lastTopic: null,
+    userType: 'curious', // curious, volunteer, confused
+    explanationMode: null, // quick, detailed
+    awaitingClarification: false
 };
 
 // ================== SYNONYMS SYSTEM ==================
 const intentSynonyms = {
+    learn: ["عايز اعرف", "عاوز اعرف", "اعرف", "معلومات", "اشرحلي", "فاهمني", "شرح"],
+    volunteer: ["عايز اشارك", "عاوز اشارك", "اشارك", "تطوع", "انزل", "اجي ازاي", "مشاركه"],
+    quick: ["بسرعه", "مختصر", "سريع", "هات من الاخر", "الخلاصه", "خلاصه"],
+    detailed: ["بالتفصيل", "تفاصيل", "شرح كامل", "كل حاجه", "بالظبط"],
+    rescue: ["مش عارف", "مش عارف اسال ايه", "اساعدك ازاي", "ايه الاسئله", "مساعده", "help"],
     flow: ["بتروح فين", "بتتوزع", "بعد الفرز", "بيحصل فيها ايه", "الهدوم الكويسه", "الهدوم الكويسة"],
     farzawi: ["فرزاوي"],
     opinion: ["كويس", "حلو", "وحش", "ولا لا", "احسن"],
-    all_roles: ["مسؤولين اللجنه", "مسئولين اللجنه", "تيم الفرز", "فريق الفرز", "الناس بتاعت الفرز", "كلهم", "كله", "الكل", "المسؤولين كلهم", "عاوزهم كلهم", "المسؤولين"],
-    generic_roles: ["مسؤول", "مسئول", "مين ماسك", "مين رئيس", "اللجنه", "تيم", "فريق", "مين"],
+    all_roles: ["مسؤولين اللجنه", "مسئولين اللجنه", "تيم الفرز", "فريق الفرز", "الناس بتاعت الفرز", "كلهم", "كله", "الكل", "المسؤولين كلهم", "عاوزهم كلهم", "المسؤولين", "تيم", "التيم", "فريق", "الفريق", "الناس اللي ماسكة"],
+    generic_roles: ["مسؤول", "مسئول", "مين ماسك", "مين رئيس", "اللجنه", "مين"],
     schedule: ["ميعاد", "امتي", "امتى", "مواعيد", "بيبدأ", "شغالين", "الساعه", "ايام ايه", "بتفتحوا"],
     categories: ["تصنيفات", "تقسيم", "بتقسموا", "المعارض فيها ايه", "انواع الهدوم"],
     categories_haremy: ["حريمي"],
@@ -28,14 +36,14 @@ const intentSynonyms = {
 const knowledgeBase = {
     "📦 الفرز بيعمل ايه؟": "بص يا نجم 😎 الفرز باختصار إن الهدوم بتيجي في شكاير، وإحنا بنصنفها لـ 3 أنواع (كساء، معارض، تالف) عشان كل حاجة تروح مكانها الصح ✌️",
     "👕 يعني ايه كساء؟": "👕 **الكساء**:\nدي الهدوم اللي جودتها ممتازة وشبه الجديدة. بنوزعها **مجاناً** مرتين في السنة على الأسر عشان نفرحهم في المناسبات 🌟",
-    "🛍️ المعارض يعني ايه؟": "🛍️ **المعارض**:\nدي هدوم حالتها كويسة بس اتلبست قبل كده. بنعمل بيها معارض بأسعار رمزية جداً عشان نحافظ على كرامة الناس.\n💡 الفلوس دي بترجع للجمعية عشان نشتري بيها هدوم جديدة للأسر 👌",
-    "♻️ التالف بيعمل ايه؟": "♻️ **التالف**:\nدي الهدوم المقطعة. بنبيعها لعمال بيستفيدوا من (الزراير والسوست)، والباقي بيروح مصانع تدوير لخيوط.\n💡 يعني مفيش حاجة عندنا بتترمي، والعائد بيرجع يفيدنا تاني! 😎",
+    "🛍️ المعارض يعني ايه؟": "🛍️ **المعارض**:\nدي هدوم حالتها كويسة بس اتلبست قبل كده. بنعمل بيها معارض بأسعار رمزية جداً عشان نحافظ على كرامة الناس.\n💡 **أهم حاجة**: الفلوس دي بترجع للجمعية عشان نشتري بيها هدوم جديدة للأسر 👌",
+    "♻️ التالف بيعمل ايه؟": "♻️ **التالف**:\nدي الهدوم المقطعة. بنبيعها لعمال بيستفيدوا من (الزراير والسوست)، والباقي بيروح مصانع تدوير لخيوط.\n💡 **أهم حاجة**: مفيش حاجة عندنا بتترمي، والعائد بيرجع يفيدنا تاني! 😎",
 
     "👤 مسؤول فرزاوي": "مسؤول فرزاوي هو مروان 🎯",
     "👤 مسؤول الفرز": "مسؤول الفرز هو معاذ 👌",
     "📱 مسؤول الميديا": "مسؤول الميديا هو علي 🎬",
     "🏢 مسؤول الباك يارد": "مسؤول الباك يارد هي هاجر 🏢",
-    "🤝 مسؤول HR": "مسؤول الـ HR هي ايمان\nومعاها ريماس كنائب مسؤول 🤝",
+    "🤝 مسؤول HR": "مسؤول الـ HR هو ايمان\nونائب المسؤول هو ريماس 🤝",
     "🏢 مسؤول المشاريع": "مسؤول المشاريع هي أميرة 💼",
     "🏢 مسؤول المخازن": "مسؤول المخازن هو يس 📦",
 
@@ -66,11 +74,29 @@ function normalize(text) {
         .replace(/الميدبا/g, 'الميديا');
 }
 
-function detectIntent(normalizedInput) {
-    // Priority 1: FLOW (Highest priority to block wrong matching)
-    if (intentSynonyms.flow.some(kw => normalizedInput.includes(kw))) return { type: 'FLOW' };
+function detectIntentsInSegment(segment) {
+    let matchedIntents = [];
 
-    // Priority 2: SPECIFIC ROLES
+    // Smart Assumptions
+    if (segment === "معارض" || segment === "المعارض") return [{ type: 'MAARED_SHORT' }];
+    if (segment === "كساء" || segment === "الكساء") return [{ type: 'KESAA_SHORT' }];
+
+    // Clarification Handling
+    if (userContext.awaitingClarification) {
+        if (segment.includes("كساء")) return [{ type: 'KNOWLEDGE', key: '👕 يعني ايه كساء؟' }];
+        if (segment.includes("معارض")) return [{ type: 'KNOWLEDGE', key: '🛍️ المعارض يعني ايه؟' }];
+    }
+
+    if (intentSynonyms.rescue.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'RESCUE' });
+    if (intentSynonyms.learn.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'LEARN' });
+    if (intentSynonyms.volunteer.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'VOLUNTEER' });
+    if (intentSynonyms.quick.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'MODE_QUICK' });
+    if (intentSynonyms.detailed.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'MODE_DETAILED' });
+
+    if (intentSynonyms.flow.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'FLOW' });
+
+    // Roles (Priority over generic sorting)
+    let roleFound = false;
     const roleIntents = [
         { key: "👤 مسؤول فرزاوي", keywords: ['مسؤول فرزاوي', 'مسئول فرزاوي', 'مين فرزاوي', 'بتاع فرزاوي', 'مين مسئول فرزاوي'] },
         { key: "👤 مسؤول الفرز", keywords: ['مسؤول الفرز', 'مسئول الفرز', 'مين في الفرز', 'رئيس الفرز', 'بتاع الفرز'] },
@@ -82,25 +108,31 @@ function detectIntent(normalizedInput) {
     ];
     for (let intent of roleIntents) {
         if (intent.keywords.some(kw => {
-            // Prevent partial substring matching for short names (e.g. "يس" matching inside "كويسه")
-            if (kw === 'يس' || kw === 'hr') return normalizedInput.split(' ').includes(kw);
-            return normalizedInput.includes(kw);
-        })) return { type: 'KNOWLEDGE', key: intent.key };
+            if (kw === 'يس' || kw === 'hr') return segment.split(' ').includes(kw);
+            return segment.includes(kw);
+        })) {
+            matchedIntents.push({ type: 'KNOWLEDGE', key: intent.key });
+            roleFound = true;
+        }
     }
 
-    if (intentSynonyms.farzawi.some(kw => normalizedInput.includes(kw))) return { type: 'FARZAWI' };
-
-    if (intentSynonyms.opinion.some(kw => normalizedInput.includes(kw)) || normalizedInput.split(' ').includes('ولا')) return { type: 'OPINION' };
-
-    if (intentSynonyms.all_roles.some(kw => normalizedInput.includes(kw))) return { type: 'ALL_ROLES' };
+    if (intentSynonyms.farzawi.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'FARZAWI' });
+    if (intentSynonyms.opinion.some(kw => segment.includes(kw)) || segment.split(' ').includes('ولا')) matchedIntents.push({ type: 'OPINION' });
     
-    if (intentSynonyms.generic_roles.some(kw => normalizedInput.split(' ').includes(kw))) return { type: 'CLARIFY_ROLE' };
+    if (intentSynonyms.all_roles.some(kw => segment.includes(kw))) {
+        matchedIntents.push({ type: 'ALL_ROLES' });
+        roleFound = true;
+    }
+    
+    if (!roleFound && intentSynonyms.generic_roles.some(kw => segment.split(' ').includes(kw))) {
+        matchedIntents.push({ type: 'CLARIFY_ROLE' });
+    }
 
-    if (intentSynonyms.schedule.some(kw => normalizedInput.includes(kw))) return { type: 'KNOWLEDGE', key: '⏰ مواعيد الفرز' };
-
-    if (intentSynonyms.categories.some(kw => normalizedInput.includes(kw))) return { type: 'CATEGORIES_GENERAL' };
-    if (intentSynonyms.categories_haremy.some(kw => normalizedInput.includes(kw))) return { type: 'CATEGORIES_HAREMY' };
-    if (intentSynonyms.categories_winter.some(kw => normalizedInput.includes(kw))) return { type: 'CATEGORIES_WINTER' };
+    if (intentSynonyms.schedule.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'KNOWLEDGE', key: '⏰ مواعيد الفرز' });
+    
+    if (intentSynonyms.categories.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'CATEGORIES_GENERAL' });
+    if (intentSynonyms.categories_haremy.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'CATEGORIES_HAREMY' });
+    if (intentSynonyms.categories_winter.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'CATEGORIES_WINTER' });
 
     // Sorting Knowledge
     const sortingIntents = [
@@ -111,131 +143,238 @@ function detectIntent(normalizedInput) {
         { key: "🛍️ المعارض يعني ايه؟", keywords: ['معارض', 'معرض', 'المعارض', 'شرح المعارض', 'يعني ايه معرض'] },
         { key: "♻️ التالف بيعمل ايه؟", keywords: ['تالف', 'التالف', 'اعاده تدوير', 'تدوير', 'زراير'] }
     ];
+    
     for (let intent of sortingIntents) {
-        if (intent.keywords.some(kw => normalizedInput.includes(kw))) return { type: 'KNOWLEDGE', key: intent.key };
+        if (intent.keywords.some(kw => segment.includes(kw))) {
+            // Prevent matching generic "الفرز" if a specific role was found (e.g., "مسؤول الفرز")
+            if (intent.key === "📦 الفرز بيعمل ايه؟" && roleFound) {
+                continue;
+            }
+            matchedIntents.push({ type: 'KNOWLEDGE', key: intent.key });
+        }
     }
 
-    if (intentSynonyms.greeting.some(kw => normalizedInput.includes(kw))) return { type: 'GREETING' };
+    if (intentSynonyms.greeting.some(kw => segment.includes(kw))) matchedIntents.push({ type: 'GREETING' });
+    if (intentSynonyms.social.some(kw => segment === kw || segment.split(' ').includes(kw))) matchedIntents.push({ type: 'SOCIAL' });
 
-    if (intentSynonyms.social.some(kw => normalizedInput === kw || normalizedInput.split(' ').includes(kw))) return { type: 'SOCIAL' };
+    if (matchedIntents.length === 0) {
+        matchedIntents.push({ type: 'FALLBACK' });
+    }
 
-    return { type: 'FALLBACK' };
+    return matchedIntents;
 }
 
 function getResponse(text) {
     const normalizedText = normalize(text);
-    const intent = detectIntent(normalizedText);
+    
+    // Split ONLY on safe patterns like " و ", "،", "and", ","
+    const segments = normalizedText.split(/\s+و\s+|،|,|\s+and\s+/);
+    
+    let allIntents = [];
+    segments.forEach(segment => {
+        const intents = detectIntentsInSegment(segment);
+        allIntents = allIntents.concat(intents);
+    });
 
-    let finalResponse = "";
-    const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // Deduplicate intents
+    const uniqueIntents = [];
+    const seen = new Set();
+    for (const intent of allIntents) {
+        const id = intent.type + (intent.key ? '-' + intent.key : '');
+        if (!seen.has(id)) {
+            seen.add(id);
+            uniqueIntents.push(intent);
+        }
+    }
+    allIntents = uniqueIntents;
 
-    switch (intent.type) {
-        case 'FLOW':
-            if (normalizedText.includes('كويس') || normalizedText.includes('نضيف') || userContext.lastTopic === 'kesaa') {
-                finalResponse = "الهدوم الكويسة 👌 بتروح للكساء<br>وده بيتوزع مجانًا على الأسر المستحقة مرتين في السنة 💙";
-                userContext.lastTopic = 'kesaa';
-            } else if (normalizedText.includes('معارض') || userContext.lastTopic === 'maared') {
-                finalResponse = "المعارض بتروح لقرى محتاجة<br>وبتتباع بأسعار رمزية عشان نحافظ على كرامة الناس 💪";
-                userContext.lastTopic = 'maared';
-            } else if (userContext.lastTopic === 'sorting' || userContext.lastTopic === 'categories') {
-                finalResponse = "بص يا نجم، الهدوم الممتازة بتروح (كساء) وتتوزع مجاناً، واللي حالتها كويسة بتروح (معارض) وتتباع رمزي، والمقطعة بتروح (تالف) عشان تتعاد تدويرها 😎";
-                userContext.lastTopic = 'sorting';
-            } else {
-                finalResponse = "تقصد الكساء ولا المعارض؟ 👀";
-                userContext.lastIntent = 'clarify_flow';
-            }
-            break;
-
-        case 'OPINION':
-            finalResponse = randomPick([
-                "بص يا معلم 😎<br>الفرز من أحلى اللجان بصراحة، شغل مفيد وجو حلو والناس فيه زي الفل 👌<br>بس في الآخر جرب بنفسك وشوف أنت ترتاح فين 💪",
-                "الفرز جامد والله 🔥<br>بس برضه كل لجنة ليها جوها، انزل وجرب وانت اللي هتحكم 😉"
-            ]);
-            userContext.lastIntent = 'opinion';
-            userContext.lastTopic = 'sorting';
-            break;
-
-        case 'CATEGORIES_GENERAL':
-            finalResponse = "بص يا معلم 👌<br>احنا بنقسم الهدوم لـ 3 حاجات:<br><br>1️⃣ كساء<br>2️⃣ معارض<br>3️⃣ تالف<br><br>طيب المعارض فيها ايه؟ 👇<br><br>• حريمي<br>• رجالي<br>• اطفال<br>• احذية<br>• شنط<br>• مفروشات<br>• بدل<br>• عرايس<br>• مدارس<br>• تالف جينز<br>• زيادات<br>• شتوي (ده بيبقى موجود في الصيف)<br>• طرح<br>• مواليد<br><br>يعني كل حاجة ليها تصنيف عشان توصل صح للي محتاجها 💪";
-            userContext.lastIntent = 'categories';
-            userContext.lastTopic = 'categories';
-            break;
-
-        case 'CATEGORIES_HAREMY':
-            finalResponse = "الحريمي يا سيدي هو أي لبس بناتي أو حريمي بينزل المعارض 👗<br>بنعزله لوحده عشان يتفرز ويتجهز صح 👌";
-            userContext.lastIntent = 'categories_haremy';
-            userContext.lastTopic = 'categories';
-            break;
-
-        case 'CATEGORIES_WINTER':
-            finalResponse = "سؤال حلو! الشتوي بيطلع في الصيف عشان بيتم تخزينه للموسم بتاعه ❄️<br>بنجهزه ونعينه عشان اول ما الشتا يدخل يكون جاهز يتوزع في المعارض أو الكساء 💪";
-            userContext.lastIntent = 'categories_winter';
-            userContext.lastTopic = 'categories';
-            break;
-
-        case 'FARZAWI':
-            finalResponse = "فرزاوي واقفة مؤقتًا لحد ما أبطالنا يخلصوا امتحاناتهم 💪🔥";
-            userContext.lastIntent = 'farzawi';
-            userContext.lastTopic = 'events';
-            break;
-
-        case 'GREETING':
-            finalResponse = randomPick([
-                "زي الفل يا معلم 😎 وانت عامل ايه؟ جاهز نخش في الفرز؟ 💪",
-                "أهلاً بيك يا غالي! نورتنا 🌟 تحب تسأل عن الفرز أو المسؤولين؟",
-                "تمام وزي العسل 👌 تحب نتكلم في ايه؟"
-            ]);
-            userContext.lastIntent = 'greeting';
-            userContext.lastTopic = 'general';
-            break;
-
-        case 'SOCIAL':
-            finalResponse = randomPick([
-                "حبيبي 👌 تحب نكمل في ايه؟",
-                "تسلم يا غالي ❤️ في حاجة تانية اقدر اساعدك فيها؟",
-                "يا سيدي تمام وزي الفل 😎 اسألني لو محتاج حاجة كمان!"
-            ]);
-            userContext.lastIntent = 'social';
-            break;
-
-        case 'ALL_ROLES':
-            finalResponse = getAllRolesText();
-            userContext.lastIntent = 'roles';
-            userContext.lastTopic = 'roles';
-            break;
-
-        case 'CLARIFY_ROLE':
-            if (userContext.lastTopic === 'roles') {
-                finalResponse = getAllRolesText();
-            } else {
-                finalResponse = "تحب تعرف مسؤول مين؟ ولا أقولك كلهم مرة واحدة؟ 👀";
-            }
-            userContext.lastIntent = 'roles_list_prompt';
-            userContext.lastTopic = 'roles';
-            break;
-
-        case 'KNOWLEDGE':
-            finalResponse = knowledgeBase[intent.key];
-            userContext.lastIntent = 'knowledge';
-            if (intent.key.includes('مواعيد')) userContext.lastTopic = 'schedule';
-            else if (intent.key.includes('مسؤول')) userContext.lastTopic = 'roles';
-            else if (intent.key.includes('كساء')) userContext.lastTopic = 'kesaa';
-            else if (intent.key.includes('المعارض')) userContext.lastTopic = 'maared';
-            else userContext.lastTopic = 'sorting';
-            break;
-
-        case 'FALLBACK':
-        default:
-            finalResponse = randomPick([
-                "مش واضحلي أوي 🤔<br>جرب تسأل عن الفرز، المسؤولين، أو المواعيد 👇",
-                "معلش مفهمتش قصدك اوي 😅<br>ممكن توضح أكتر؟",
-                "امممم.. مش متأكد. بس ممكن تسألني عن مواعيدنا أو أنواع الفرز! 💡"
-            ]);
-            userContext.lastIntent = 'fallback';
-            break;
+    // Remove FALLBACK if we have valid intents
+    if (allIntents.length > 1) {
+        allIntents = allIntents.filter(intent => intent.type !== 'FALLBACK');
     }
 
-    return finalResponse;
+    userContext.awaitingClarification = false; // reset by default
+
+    let finalResponses = [];
+    const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    let needsFollowUp = false;
+
+    allIntents.forEach(intent => {
+        let finalResponse = "";
+
+        switch (intent.type) {
+            case 'GREETING':
+                finalResponse = "أهلاً بيك يا غالي! نورتنا 🌟<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀";
+                userContext.lastIntent = 'greeting';
+                userContext.lastTopic = 'start';
+                break;
+
+            case 'LEARN':
+                finalResponse = "تحب الشرح بسرعة ولا بالتفصيل؟ 👀";
+                userContext.lastIntent = 'learn';
+                userContext.lastTopic = 'learning_mode';
+                userContext.userType = 'curious';
+                break;
+
+            case 'VOLUNTEER':
+                finalResponse = "عاش يا بطل! 💪 المكان منور بيك.<br>مواعيدنا كل يوم من 11 لـ 6 ماعدا الجمعة.<br>تحب تعرف أكتر عن اللجان والمسؤولين ولا المواعيد؟";
+                userContext.lastIntent = 'volunteer';
+                userContext.lastTopic = 'volunteer';
+                userContext.userType = 'volunteer';
+                break;
+
+            case 'MODE_QUICK':
+            case 'MODE_DETAILED':
+                userContext.explanationMode = intent.type === 'MODE_QUICK' ? 'quick' : 'detailed';
+                userContext.lastTopic = 'sorting_explained';
+                
+                if (userContext.explanationMode === 'quick') {
+                    finalResponse = "الفرز بنقسم فيه الهدوم 3 أنواع: (كساء، معارض، وتالف).<br>تحب تعرف الهدوم دي بتروح فين؟ 👀";
+                } else {
+                    finalResponse = "بص يا سيدي:<br>بنستلم الشكاير، وكل حتة بنشوف حالتها:<br>لو ممتازة ⬅️ بتبقى كساء للأسر.<br>لو كويسة ⬅️ بتبقى معارض بأسعار رمزية.<br>لو مقطعة ⬅️ بتبقى تالف للتدوير.<br>💡 أهم حاجة: الفلوس بترجع للجمعية عشان نجيب بيها هدوم تاني.<br>تحب تعرف تفاصيل أكتر عن كل نوع؟ 👀";
+                }
+                break;
+
+            case 'MAARED_SHORT':
+                finalResponse = "تقصد عايز تعرف المعارض ايه ولا بتروح فين؟ 👀";
+                userContext.awaitingClarification = true;
+                userContext.lastTopic = 'maared_clarify';
+                break;
+
+            case 'KESAA_SHORT':
+                finalResponse = "تقصد عايز تعرف الكساء ايه ولا بيتوزع ازاي؟ 👀";
+                userContext.awaitingClarification = true;
+                userContext.lastTopic = 'kesaa_clarify';
+                break;
+
+            case 'RESCUE':
+                finalResponse = "ولا يهمك يا بطل! 💡<br>دي أهم الحاجات اللي ممكن تسألني فيها:";
+                userContext.lastTopic = 'rescue';
+                break;
+
+            case 'FLOW':
+                if (normalizedText.includes('كويس') || normalizedText.includes('نضيف') || userContext.lastTopic === 'kesaa') {
+                    finalResponse = "الهدوم الكويسة 👌 بتروح للكساء<br>وده بيتوزع مجانًا على الأسر المستحقة مرتين في السنة 💙";
+                    userContext.lastTopic = 'kesaa';
+                } else if (normalizedText.includes('معارض') || userContext.lastTopic === 'maared' || userContext.lastTopic === 'maared_clarify') {
+                    finalResponse = "المعارض بتروح لقرى محتاجة<br>وبتتباع بأسعار رمزية عشان نحافظ على كرامة الناس 💪";
+                    userContext.lastTopic = 'maared';
+                } else if (userContext.lastTopic === 'sorting' || userContext.lastTopic === 'categories' || userContext.lastTopic === 'sorting_explained') {
+                    finalResponse = "بص يا نجم، الهدوم الممتازة بتروح (كساء) وتتوزع مجاناً، واللي حالتها كويسة بتروح (معارض) وتتباع رمزي، والمقطعة بتروح (تالف) عشان تتعاد تدويرها 😎";
+                    userContext.lastTopic = 'sorting';
+                } else {
+                    finalResponse = "تقصد الكساء ولا المعارض؟ 👀";
+                    userContext.awaitingClarification = true;
+                    userContext.lastTopic = 'clarify_flow';
+                }
+                break;
+
+            case 'OPINION':
+                finalResponse = randomPick([
+                    "بص يا معلم 😎<br>الفرز من أحلى اللجان بصراحة، شغل مفيد وجو حلو والناس فيه زي الفل 👌<br>بس في الآخر جرب بنفسك وشوف أنت ترتاح فين 💪",
+                    "الفرز جامد والله 🔥<br>بس برضه كل لجنة ليها جوها، انزل وجرب وانت اللي هتحكم 😉"
+                ]);
+                userContext.lastTopic = 'opinion';
+                break;
+
+            case 'CATEGORIES_GENERAL':
+                finalResponse = "احنا بنقسم الهدوم لـ 3 حاجات (كساء، معارض، تالف).<br>المعارض فيها: حريمي، رجالي، اطفال، احذية، شنط، ومفروشات...<br>تحب تعرف الهدوم دي بتروح فين؟ 👀";
+                userContext.lastTopic = 'categories';
+                break;
+
+            case 'CATEGORIES_HAREMY':
+                finalResponse = "الحريمي يا سيدي هو أي لبس بناتي أو حريمي بينزل المعارض 👗<br>بنعزله لوحده عشان يتفرز ويتجهز صح 👌";
+                userContext.lastTopic = 'categories';
+                break;
+
+            case 'CATEGORIES_WINTER':
+                finalResponse = "سؤال حلو! الشتوي بيطلع في الصيف عشان بيتم تخزينه للموسم بتاعه ❄️<br>بنجهزه ونعينه عشان اول ما الشتا يدخل يكون جاهز يتوزع في المعارض أو الكساء 💪";
+                userContext.lastTopic = 'categories';
+                break;
+
+            case 'FARZAWI':
+                finalResponse = "فرزاوي واقفة مؤقتًا لحد ما أبطالنا يخلصوا امتحاناتهم 💪🔥";
+                userContext.lastTopic = 'events';
+                break;
+
+            case 'SOCIAL':
+                finalResponse = randomPick([
+                    "حبيبي 👌 تحب نكمل في ايه؟",
+                    "تسلم يا غالي ❤️ في حاجة تانية اقدر اساعدك فيها؟"
+                ]);
+                break;
+
+            case 'ALL_ROLES':
+                finalResponse = getAllRolesText();
+                userContext.lastTopic = 'roles';
+                break;
+
+            case 'CLARIFY_ROLE':
+                if (userContext.lastTopic === 'roles') {
+                    finalResponse = getAllRolesText();
+                } else {
+                    finalResponse = "تحب تعرف مسؤول مين؟ ولا أقولك كلهم مرة واحدة؟ 👀";
+                    userContext.awaitingClarification = true;
+                }
+                userContext.lastTopic = 'roles';
+                break;
+
+            case 'KNOWLEDGE':
+                finalResponse = knowledgeBase[intent.key];
+                if (intent.key.includes('مواعيد')) userContext.lastTopic = 'schedule';
+                else if (intent.key.includes('مسؤول')) userContext.lastTopic = 'roles';
+                else if (intent.key.includes('كساء')) userContext.lastTopic = 'kesaa';
+                else if (intent.key.includes('المعارض')) userContext.lastTopic = 'maared';
+                else userContext.lastTopic = 'sorting';
+                
+                // Track if we need to append the follow-up question
+                if (intent.key.includes('الفرز بيعمل ايه') || intent.key.includes('يعني ايه كساء') || intent.key.includes('المعارض يعني ايه') || intent.key.includes('التالف بيعمل ايه')) {
+                    needsFollowUp = true;
+                }
+                break;
+
+            case 'FALLBACK':
+            default:
+                userContext.userType = 'confused';
+                finalResponse = "مش واضحلي أوي 🤔<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀";
+                userContext.lastTopic = 'start';
+                break;
+        }
+
+        if (finalResponse) {
+            finalResponses.push(finalResponse);
+        }
+    });
+
+    let mergedResponse = "";
+
+    if (finalResponses.length === 1) {
+        mergedResponse = finalResponses[0];
+    } else if (finalResponses.length > 1) {
+        const intros = [
+            "بص يا معلم 👌<br><br>",
+            "حاضر، هقولك كل حاجة 👇<br><br>",
+            "من عينيا الاتنين، خد عندك:<br><br>",
+            "ولا يهمك، بص يا سيدي:<br><br>"
+        ];
+        const intro = randomPick(intros);
+        
+        // Remove fallbacks from the mix just in case
+        finalResponses = finalResponses.filter(res => !res.includes("مش واضحلي أوي 🤔"));
+        
+        mergedResponse = intro + finalResponses.join("<br><br>---<br><br>");
+    } else {
+        mergedResponse = "مش واضحلي أوي 🤔<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀";
+        userContext.userType = 'confused';
+        userContext.lastTopic = 'start';
+    }
+
+    // Append auto follow-up only once at the end
+    if (needsFollowUp) {
+        mergedResponse += "<br><br>تحب تعرف الهدوم دي بتروح فين؟ 👀";
+    }
+
+    return mergedResponse;
 }
 
 function getAllRolesText() {
@@ -244,11 +383,11 @@ function getAllRolesText() {
         "• الميديا: علي<br>" +
         "• المشاريع: أميرة<br>" +
         "• الباك يارد: هاجر<br>" +
-        "• HR: ايمان (ومعاها ريماس)<br>" +
+        "• HR: ايمان<br>" +
+        "• نائب HR: ريماس<br>" +
         "• المخازن: يس<br>" +
         "• فرزاوي: مروان";
 }
-
 
 // ================== UI HANDLER ==================
 
@@ -271,10 +410,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const typing = showTypingIndicator();
             setTimeout(() => {
                 typing.remove();
-                addMessage("أهلاً بيك في فرزون 🤖<br>اسأل براحتك أو اختار من اللي تحت 👇", 'bot');
+                addMessage("أهلاً بيك في فرزون 🤖<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀", 'bot');
+                userContext.lastTopic = 'start';
+                updateSuggestions();
             }, 1200);
         }, 500);
-    }, 1500); // Wait 1.5s to show loader for UX
+    }, 1500);
 
     // Options Menu Logic
     const optionsBtn = document.getElementById('options-btn');
@@ -342,39 +483,28 @@ document.addEventListener('DOMContentLoaded', () => {
         let suggestionKeys = [];
         const topic = userContext.lastTopic;
         
-        if (topic === 'sorting' || topic === 'categories') {
-            suggestionKeys = ["👕 يعني ايه كساء؟", "🛍️ المعارض يعني ايه؟", "♻️ التالف بيعمل ايه؟", "💡 مش عارف تسأل ايه؟"];
+        if (topic === 'start') {
+            suggestionKeys = ["عايز أعرف", "عايز أشارك", "🔍 مش عارف تسأل ايه؟"];
+        } else if (topic === 'learning_mode') {
+            suggestionKeys = ["بسرعة", "بالتفصيل"];
+        } else if (topic === 'volunteer') {
+            suggestionKeys = ["⏰ مواعيد الفرز", "👥 كل المسؤولين", "📦 الفرز بيعمل ايه؟"];
+        } else if (topic === 'sorting_explained' || topic === 'categories' || topic === 'sorting') {
+            suggestionKeys = ["يعني ايه كساء؟", "المعارض بتروح فين؟", "التالف بيتعمل بيه ايه؟", "🔍 مش عارف تسأل ايه؟"];
+        } else if (topic === 'maared_clarify') {
+            suggestionKeys = ["المعارض ايه؟", "المعارض بتروح فين؟"];
+        } else if (topic === 'kesaa_clarify') {
+            suggestionKeys = ["الكساء ايه؟", "الكساء بيتوزع ازاي؟"];
         } else if (topic === 'roles') {
-            suggestionKeys = ["📱 مسؤول الميديا", "👥 كل المسؤولين", "💡 مش عارف تسأل ايه؟"];
+            suggestionKeys = ["📱 مسؤول الميديا", "👥 كل المسؤولين", "🔍 مش عارف تسأل ايه؟"];
         } else if (topic === 'schedule' || topic === 'events') {
-            suggestionKeys = ["⏰ مواعيد الفرز", "🎯 فرزاوي امتى", "💡 مش عارف تسأل ايه؟"];
+            suggestionKeys = ["⏰ مواعيد الفرز", "🎯 فرزاوي امتى", "🔍 مش عارف تسأل ايه؟"];
+        } else if (topic === 'rescue') {
+            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين"];
         } else {
-            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين", "💡 مش عارف تسأل ايه؟"];
+            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين", "🔍 مش عارف تسأل ايه؟"];
         }
 
-        suggestionKeys.forEach(key => {
-            const btn = document.createElement('button');
-            btn.className = 'chip';
-            btn.innerText = key;
-            btn.addEventListener('click', () => {
-                if (key === "💡 مش عارف تسأل ايه؟") {
-                    showHelpSuggestions();
-                } else if (key === "👥 كل المسؤولين") {
-                    handleSend("مين المسؤولين");
-                } else {
-                    const cleanText = key.replace(/[\u{1F300}-\u{1F9FF}\u{2700}-\u{27BF}]/gu, '').replace(/[؟?]/g, '').trim();
-                    handleSend(cleanText);
-                }
-            });
-            quickSuggestions.appendChild(btn);
-        });
-    }
-
-    function showHelpSuggestions() {
-        const quickSuggestions = document.getElementById('quick-suggestions');
-        if (!quickSuggestions) return;
-        quickSuggestions.innerHTML = '';
-        const suggestionKeys = ["⏰ مواعيد الفرز", "📱 مين مسؤول الميديا", "🎯 فرزاوي امتى", "📦 الفرز بيعمل ايه؟"];
         suggestionKeys.forEach(key => {
             const btn = document.createElement('button');
             btn.className = 'chip';
@@ -388,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function initSuggestions() {
-        updateSuggestions();
+        // Will be updated dynamically after bot messages
     }
 
     function handleSend(text) {
@@ -460,7 +590,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function scrollToBottom() {
-        // Smooth scroll to latest message
         chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
     }
 });
