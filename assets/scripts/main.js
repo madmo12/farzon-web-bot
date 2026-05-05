@@ -234,14 +234,26 @@ function handleMessage(text) {
                 console.log("FINAL RESPONSE:", response);
                 return response;
             } else if (action === 'conversion_prompt') {
-                const response = `حلو جدًا 👇<br>دي الأماكن اللي بنتجمع فيها<br><br>
-<div class="cta-block">
-    <a href="https://chat.whatsapp.com/EHUJW4jJTTREjOtdOpUUjp" target="_blank" class="cta-link whatsapp-btn">
-        📱 جروب الواتساب
-    </a>
-    <a href="https://www.facebook.com/groups/755347481564802/?ref=share&mibextid=NSMWBT" target="_blank" class="cta-link facebook-btn">
-        🌐 جروب الفيسبوك
-    </a>
+                const response = `
+<div class="join-groups-inline">
+    <div class="join-groups-header">
+        <strong class="join-groups-title">حلو جدًا 👌</strong><br>
+        <span class="join-groups-subtitle">دي الأماكن اللي بنتجمع فيها 👇</span>
+    </div>
+    <div class="join-groups-buttons">
+        <a href="https://chat.whatsapp.com/EHUJW4jJTTREjOtdOpUUjp" target="_blank" class="social-btn whatsapp-btn-new">
+            <svg class="social-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.423-.101.827z"/>
+            </svg>
+            <span>جروب الواتساب</span>
+        </a>
+        <a href="https://www.facebook.com/groups/755347481564802/?ref=share&mibextid=NSMWBT" target="_blank" class="social-btn facebook-btn-new">
+            <svg class="social-icon" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z"/>
+            </svg>
+            <span>جروب الفيسبوك</span>
+        </a>
+    </div>
 </div>
 `;
                 userContext.lastTopic = 'conversion_success';
@@ -551,7 +563,7 @@ function showLoading() {
     typingDiv.id = 'loading';
     typingDiv.className = 'typing-indicator-wrapper';
     typingDiv.innerHTML = `
-        <img src="./img/final-look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./img/farzoon.png'; this.onerror=null;">
+        <img src="./assets/images/chatbot-avatar.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./assets/images/chatbot-avatar.png'; this.onerror=null;">
         <div class="typing-indicator">
             <div class="typing-dot"></div>
             <div class="typing-dot"></div>
@@ -743,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let avatarHtml = '';
         if (sender === 'bot') {
-            avatarHtml = `<img src="./img/final-look.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./img/farzoon.png'; this.onerror=null;">`;
+            avatarHtml = `<img src="./assets/images/chatbot-avatar.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./assets/images/chatbot-avatar.png'; this.onerror=null;">`;
         }
 
         const timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
