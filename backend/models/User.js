@@ -34,6 +34,16 @@ const userSchema = new mongoose.Schema({
   ctaEngagements: {
     type: Number,
     default: 0
+  },
+  // ─── Progression Stats ─────────────────────────────
+  // Lightweight counters for achievement/progression system.
+  // Frontend is source of truth for unlock logic; backend persists raw stats.
+  stats: {
+    messages: { type: Number, default: 0 },
+    gamesPlayed: { type: Number, default: 0 },
+    wins: { type: Number, default: 0 },
+    losses: { type: Number, default: 0 },
+    draws: { type: Number, default: 0 }
   }
 });
 

@@ -56,6 +56,10 @@ const askQuestion = async (req, res) => {
           userDoc.ctaEngagements += 1;
         }
 
+        // Increment progression message count (piggybacked, no extra DB call)
+        if (!userDoc.stats) userDoc.stats = {};
+        userDoc.stats.messages = (userDoc.stats.messages || 0) + 1;
+
         await userDoc.save();
 
         // 2. Log Unknown Questions
