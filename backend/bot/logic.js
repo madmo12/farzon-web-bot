@@ -1,27 +1,3 @@
-/**
- * FARZOON BOT - SMART HANDLER
- */
-
-// ================== THEME INITIALIZATION ==================
-// Executed immediately to prevent flash of wrong theme
-const savedTheme = localStorage.getItem('farzon_theme');
-if (savedTheme === 'dark') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-}
-
-// ================== STATE (CONTEXT MEMORY) ==================
-let userContext = {
-    lastIntent: null,
-    lastTopic: null,
-    userType: 'curious', // curious, volunteer, confused
-    explanationMode: null, // quick, detailed
-    awaitingClarification: false,
-    pendingAction: null,
-    hasSeenConversionPrompt: false,
-    lastQuestionHint: null
-};
-
-// ================== SYNONYMS SYSTEM ==================
 const intentSynonyms = {
     learn: ["عايز اعرف", "عاوز اعرف", "اعرف", "معلومات", "اشرحلي", "فاهمني", "شرح"],
     volunteer: ["عايز اشارك", "عاوز اشارك", "اشارك", "تطوع", "انزل", "اجي ازاي", "مشاركه"],
@@ -42,13 +18,11 @@ const intentSynonyms = {
     greeting: ["اهلا", "سلام", "هاي", "مرحبا", "صباح", "مسا", "عامل ايه", "اخبارك", "ازيك", "كيفك"]
 };
 
-// ================== KNOWLEDGE BASE ==================
 const knowledgeBase = {
     "📦 الفرز بيعمل ايه؟": "بص يا نجم 😎 الفرز باختصار إن الهدوم بتيجي في شكاير، وإحنا بنصنفها لـ 3 أنواع (كساء، معارض، تالف) عشان كل حاجة تروح مكانها الصح ✌️",
     "👕 يعني ايه كساء؟": "👕 **الكساء**:\nدي الهدوم اللي جودتها ممتازة وشبه الجديدة. بنوزعها **مجاناً** مرتين في السنة على الأسر عشان نفرحهم في المناسبات 🌟",
     "🛍️ المعارض يعني ايه؟": "🛍️ **المعارض**:\nدي هدوم حالتها كويسة بس اتلبست قبل كده. بنعمل بيها معارض بأسعار رمزية جداً عشان نحافظ على كرامة الناس.\n💡 **أهم حاجة**: الفلوس دي بترجع للجمعية عشان نشتري بيها هدوم جديدة للأسر 👌",
     "♻️ التالف بيعمل ايه؟": "♻️ **التالف**:\nدي الهدوم المقطعة. بنبيعها لعمال بيستفيدوا من (الزراير والسوست)، والباقي بيروح مصانع تدوير لخيوط.\n💡 **أهم حاجة**: مفيش حاجة عندنا بتترمي، والعائد بيرجع يفيدنا تاني! 😎",
-
     "👤 مسؤول فرزاوي": "مسؤول فرزاوي هو مروان 🎯",
     "👤 مسؤول الفرز": "مسؤول اللجنة (الفرز) هو معاذ 👌",
     "📱 مسؤول الميديا": "مسؤول الميديا هو علي 🎬",
@@ -56,14 +30,41 @@ const knowledgeBase = {
     "🤝 مسؤول HR": "مسؤول الـ HR هو ايمان\nونائب المسؤول هو ريماس 🤝",
     "🏢 مسؤول المشاريع": "مسؤول المشاريع هي أميرة 💼",
     "🏢 مسؤول المخازن": "مسؤول المخازن هو يس 📦",
-
     "⏰ مواعيد الفرز": "خدها مني على السريع 👇\nإحنا موجودين كل يوم من 11 الصبح لـ 6 المغرب، **ماعدا يوم الجمعة**.\nمكانا فين؟ في الباك يارد ياريس 📍",
-
     "🤖 انت مين؟": "أنا فرزون 🤖 صاحبك ومساعدك الذكي اللي هنا يجاوبك على أي حاجة تخص الفرز في رسالة 😎",
     "⚙️ بتعمل ايه؟": "مهمتي أوفر عليك وقتك! أي حاجة عايز تعرفها عن المواعيد، المسؤولين، أو نظام الفرز... أنا موجود أقولهالك في ثانية ⚡"
 };
 
-// ================== INTENT SYSTEM ==================
+function getAllRolesText() {
+    return "مسؤولين اللجنة 👇<br><br>" +
+        "• الفرز: معاذ<br>" +
+        "• الميديا: علي<br>" +
+        "• المشاريع: أميرة<br>" +
+        "• الباك يارد: هاجر<br>" +
+        "• HR: ايمان<br>" +
+        "• نائب HR: ريماس<br>" +
+        "• المخازن: يس<br>" +
+        "• فرزاوي: مروان";
+}
+
+// Lightweight in-memory session store
+const sessions = {};
+
+function getUserContext(sessionId, dbUser) {
+    if (!sessions[sessionId]) {
+        sessions[sessionId] = {
+            lastIntent: null,
+            lastTopic: dbUser && dbUser.lastTopic ? dbUser.lastTopic : null,
+            userType: 'curious', // curious, volunteer, confused
+            explanationMode: null, // quick, detailed
+            awaitingClarification: false,
+            pendingAction: null,
+            hasSeenConversionPrompt: dbUser && dbUser.ctaEngagements > 0 ? true : false,
+            lastQuestionHint: null
+        };
+    }
+    return sessions[sessionId];
+}
 
 function normalize(text) {
     return text
@@ -84,7 +85,7 @@ function normalize(text) {
         .replace(/الميدبا/g, 'الميديا');
 }
 
-function detectIntentsInSegment(segment, fullText) {
+function detectIntentsInSegment(segment, fullText, userContext) {
     // 1. Bot Identity (CRITICAL PRIORITY)
     if (segment.includes("فرزون") && (segment.split(' ').includes("مين") || segment.split(' ').includes("انت"))) {
         return [{ type: 'BOT_IDENTITY' }];
@@ -206,11 +207,83 @@ function isNegative(normalizedText) {
     return false;
 }
 
-function handleMessage(text) {
+function isNameRecallQuestion(normalizedText) {
+    return [
+        "انا مين",
+        "تعرف انا مين",
+        "عارف انا مين",
+        "انت تعرف انا مين",
+        "انت عارف انا مين",
+        "فاكرني",
+        "فكرني",
+        "انت فاكرني",
+        "تعرفني",
+        "انت تعرفني",
+        "عارفني",
+        "انت عارفني",
+        "تعرف اسمي",
+        "عارف اسمي",
+        "انت تعرف اسمي",
+        "انت عارف اسمي",
+        "اسمي ايه",
+        "اسمي اي",
+        "فاكر اسمي"
+    ].some(phrase => normalizedText.includes(phrase));
+}
+
+function isInvalidNameCandidate(name) {
+    const firstWord = normalize(name).split(' ')[0];
+    const blockedWords = [
+        "مين", "من", "ايه", "اي", "ايه؟", "ازاي", "ليه", "امتي", "امتى", "فين",
+        "عارف", "تعرف", "فاكر", "فكرني", "اسمي", "انا", "انت",
+        "عايز", "عاوز", "مش", "بحب", "بسال", "بسأل", "جاي", "كنت", "معاك"
+    ];
+
+    return blockedWords.includes(firstWord) || blockedWords.some(w => normalize(name).includes(` ${w} `));
+}
+
+function extractName(text) {
+    const patterns = [
+        /(?:^|\s)انا اسمي\s+([a-zA-Z\u0621-\u064A]{2,20})/i,
+        /(?:^|\s)اسمي\s+([a-zA-Z\u0621-\u064A]{2,20})/i,
+        /(?:^|\s)انا\s+([a-zA-Z\u0621-\u064A]{2,15})(?:\s|$)/i,
+        /(?:^|\s)قوللي يا\s+([a-zA-Z\u0621-\u064A]{2,20})/i,
+        /(?:^|\s)ناديلي ب\s+([a-zA-Z\u0621-\u064A]{2,20})/i
+    ];
+    
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+            let extracted = match[1].trim();
+            if (extracted.length >= 2 && extracted.length <= 20) {
+                if (!isInvalidNameCandidate(extracted)) {
+                    return extracted.split(' ')[0]; // Just take first name to keep it simple
+                }
+            }
+        }
+    }
+    return null;
+}
+
+function getBotReply(text, sessionId = 'default', dbUser = null) {
+    const userContext = getUserContext(sessionId, dbUser);
     console.log("INPUT:", text);
+
+    let allIntents = [];
 
     // 1) Normalize input
     const normalizedText = normalize(text);
+
+    // 1.2) Distinguish name intro from asking Farzon to remember the name
+    const isNameRecall = isNameRecallQuestion(normalizedText);
+    const newlyExtractedName = isNameRecall ? null : (extractName(text) || extractName(normalizedText));
+    if (isNameRecall) {
+        allIntents.push({ type: 'NAME_RECALL' });
+    }
+    if (newlyExtractedName) {
+        userContext.name = newlyExtractedName;
+        allIntents.push({ type: 'NAME_INTRO' });
+    }
 
     // 1.5) Handle late confirmation
     const isConfirmGlobal = intentSynonyms.social.some(kw => normalizedText === kw || normalizedText.split(' ').includes(kw));
@@ -239,7 +312,7 @@ function handleMessage(text) {
                 userContext.lastTopic = 'sorting';
                 const response = "بص يا نجم، الهدوم الممتازة بتروح (كساء) وتتوزع مجاناً، واللي حالتها كويسة بتروح (معارض) وتتباع رمزي، والمقطعة بتروح (تالف) عشان تتعاد تدويرها 😎";
                 console.log("FINAL RESPONSE:", response);
-                return response;
+                return { reply: response, topic: userContext.lastTopic, intentType: 'KNOWLEDGE' };
             } else if (action === 'conversion_prompt') {
                 const response = `
 <div class="join-groups-inline">
@@ -265,14 +338,14 @@ function handleMessage(text) {
 `;
                 userContext.lastTopic = 'conversion_success';
                 console.log("FINAL RESPONSE:", response);
-                return response;
+                return { reply: response, topic: userContext.lastTopic, intentType: 'SOCIAL' };
             }
         } else if (isNeg) {
             if (action === 'conversion_prompt') {
                 const response = "تمام ولا يهمك 👌<br>تحب تعرف أكتر عن الفرز الأول؟";
                 userContext.lastTopic = 'start';
                 console.log("FINAL RESPONSE:", response);
-                return response;
+                return { reply: response, topic: userContext.lastTopic, intentType: 'SOCIAL' };
             }
             const randomPickLocal = (arr) => arr[Math.floor(Math.random() * arr.length)];
             const response = randomPickLocal([
@@ -281,7 +354,7 @@ function handleMessage(text) {
                 "براحتك 😄 قولّي نروح لأنهي موضوع؟"
             ]);
             console.log("FINAL RESPONSE:", response);
-            return response;
+            return { reply: response, topic: userContext.lastTopic, intentType: 'SOCIAL' };
         }
     }
 
@@ -289,11 +362,13 @@ function handleMessage(text) {
     const segments = normalizedText.split(/\s+و\s*|،|,/g).map(s => s.trim()).filter(s => s.length > 0);
     if (segments.length === 0) segments.push(normalizedText);
 
-    let allIntents = [];
     for (const segment of segments) {
-        const matchedIntents = detectIntentsInSegment(segment, normalizedText);
+        const matchedIntents = detectIntentsInSegment(segment, normalizedText, userContext);
         if (matchedIntents && matchedIntents.length > 0) {
             for (const intent of matchedIntents) {
+                if (isNameRecall && intent.type === 'CLARIFY_ROLE') {
+                    continue;
+                }
                 if (intent.type !== 'FALLBACK') {
                     allIntents.push(intent);
                 }
@@ -313,6 +388,9 @@ function handleMessage(text) {
 
     // Order logically: Concepts -> Roles -> Schedule -> Others
     const intentOrder = {
+        'NAME_RECALL': -3,
+        'NAME_INTRO': -2,
+        'GREETING': -1,
         'RESALA_INFO': 1,
         'KNOWLEDGE_🛍️ المعارض يعني ايه؟': 10,
         'KNOWLEDGE_👕 يعني ايه كساء؟': 11,
@@ -348,9 +426,11 @@ function handleMessage(text) {
     let finalResponses = [];
     const randomPick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     let needsFollowUp = false;
+    let mainIntentType = 'FALLBACK';
 
     // 4) If intents found → return combined response immediately
     if (uniqueIntents.length > 0) {
+        mainIntentType = uniqueIntents[0].type;
         for (const intent of uniqueIntents) {
             let res = "";
             switch (intent.type) {
@@ -365,8 +445,40 @@ function handleMessage(text) {
                     userContext.lastTopic = 'start';
                     break;
 
+                case 'NAME_RECALL':
+                    const rememberedName = userContext.name || (dbUser ? dbUser.name : '');
+                    res = rememberedName ? `أكيد فاكرك يا ${rememberedName} 😏` : "لسه مقولتليش اسمك 👀";
+                    userContext.lastTopic = 'start';
+                    break;
+
+                case 'NAME_INTRO':
+                    // If GREETING is also present, it will handle it to avoid duplicate messages
+                    if (!uniqueIntents.some(i => i.type === 'GREETING')) {
+                        res = `تشرفنا يا ${userContext.name} 👋`;
+                        if (uniqueIntents.length === 1) {
+                            res += `<br>تحب تفهم الفرز بيتم إزاي ولا تعرف دورك فيه؟ 👀`;
+                        }
+                        userContext.lastTopic = 'start';
+                    }
+                    break;
+
                 case 'GREETING':
-                    res = "أهلاً بيك 👋<br>تحب تفهم الفرز بيتم إزاي ولا تعرف دورك فيه؟ 👀";
+                    const greetName = userContext.name || (dbUser ? dbUser.name : '');
+                    const nameStr = greetName ? ` يا ${greetName}` : ' بيك';
+                    
+                    if (newlyExtractedName) {
+                        res = `الحمدلله${nameStr} 😏<br>تشرفنا بيك 👋`;
+                    } else if (dbUser && dbUser.visitCount > 1) {
+                        res = `رجعت تاني${nameStr} 👋`;
+                    } else {
+                        res = `أهلاً${nameStr} 👋`;
+                    }
+                    
+                    // Add default prompt only if no other topics were requested
+                    if (uniqueIntents.every(i => i.type === 'GREETING' || i.type === 'NAME_INTRO')) {
+                        res += `<br>تحب تفهم الفرز بيتم إزاي ولا تعرف دورك فيه؟ 👀`;
+                    }
+                    
                     userContext.lastIntent = 'greeting';
                     userContext.lastTopic = 'start';
                     break;
@@ -500,10 +612,21 @@ function handleMessage(text) {
 
         if (finalResponses.length > 0) {
             let finalResponseText = "";
-            if (finalResponses.length === 1) {
-                finalResponseText = finalResponses[0];
+            let greetingPrefix = "";
+            let coreResponses = finalResponses;
+            
+            // Extract greeting/name intro so it isn't put in the bullet list
+            if (uniqueIntents[0].type === 'NAME_INTRO' || uniqueIntents[0].type === 'GREETING') {
+                greetingPrefix = finalResponses[0] + "<br><br>";
+                coreResponses = finalResponses.slice(1);
+            }
+
+            if (coreResponses.length === 0) {
+                finalResponseText = finalResponses[0]; // Was just a greeting
+            } else if (coreResponses.length === 1) {
+                finalResponseText = greetingPrefix + coreResponses[0];
             } else {
-                const cleanedResponses = finalResponses.map(r => {
+                const cleanedResponses = coreResponses.map(r => {
                     return r.replace(/بص يا سيدي 👇<br>/g, '')
                             .replace(/بص يا معلم 😎<br>/g, '')
                             .replace(/^بص يا نجم، /g, '')
@@ -514,7 +637,7 @@ function handleMessage(text) {
                             .replace(/<br>تحب تعرف تفاصيل أكتر عن كل نوع؟ 👀/g, '')
                             .trim();
                 });
-                finalResponseText = "بص يا معلم 👇<br><br>" + cleanedResponses.map(r => "• " + r).join("<br><br>");
+                finalResponseText = greetingPrefix + "بص يا معلم 👇<br><br>" + cleanedResponses.map(r => "• " + r).join("<br><br>");
             }
 
             // Append auto follow-up only once at the end
@@ -530,386 +653,19 @@ function handleMessage(text) {
                 }
             }
 
-            console.log("FINAL RESPONSE:", finalResponseText);
-            return finalResponseText;
+            return { reply: finalResponseText, topic: userContext.lastTopic, intentType: mainIntentType, extractedName: newlyExtractedName };
         }
     }
 
-    // 5) If no intent → fallback
-    userContext.userType = 'confused';
-    userContext.lastTopic = 'start';
-    const fallbackResponse = "مش واضحلي أوي 🤔<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀";
-    console.log("FINAL RESPONSE:", fallbackResponse);
-    return fallbackResponse;
+    // 4.5) Handle cases where NO intent matched
+    if (uniqueIntents.length === 0) {
+        // Fallback
+        userContext.userType = 'confused';
+        userContext.lastTopic = 'start';
+        const fallbackResponse = "مش واضحلي أوي 🤔<br>تحب تعرف عن الفرز ولا تشارك معانا؟ 👀";
+        console.log("FINAL RESPONSE:", fallbackResponse);
+        return { reply: fallbackResponse, topic: userContext.lastTopic, intentType: 'FALLBACK', extractedName: newlyExtractedName };
+    }
 }
 
-function getAllRolesText() {
-    return "مسؤولين اللجنة 👇<br><br>" +
-        "• الفرز: معاذ<br>" +
-        "• الميديا: علي<br>" +
-        "• المشاريع: أميرة<br>" +
-        "• الباك يارد: هاجر<br>" +
-        "• HR: ايمان<br>" +
-        "• نائب HR: ريماس<br>" +
-        "• المخازن: يس<br>" +
-        "• فرزاوي: مروان";
-}
-
-// ================== UI HANDLER ==================
-
-let isLoading = false;
-
-function showLoading() {
-    if (isLoading) return;
-    isLoading = true;
-
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-
-    const typingDiv = document.createElement('div');
-    typingDiv.id = 'loading';
-    typingDiv.className = 'typing-indicator-wrapper';
-    typingDiv.innerHTML = `
-        <img src="./assets/images/chatbot-avatar.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./assets/images/chatbot-avatar.png'; this.onerror=null;">
-        <div class="typing-indicator">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-        </div>
-    `;
-    chatMessages.appendChild(typingDiv);
-    chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-}
-
-function removeLoading() {
-    const loader = document.getElementById('loading');
-    if (loader) {
-        loader.remove();
-    }
-    isLoading = false;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    const chatMessages = document.getElementById('chat-messages');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
-    const loadingScreen = document.getElementById('loading-screen');
-
-    // Loading Screen Logic
-    setTimeout(() => {
-        if (loadingScreen) {
-            loadingScreen.classList.add('hidden');
-            setTimeout(() => loadingScreen.remove(), 500); // Remove from DOM after transition
-        }
-
-        // Render daily mood status
-        if (typeof DailyMood !== 'undefined') {
-            DailyMood.render();
-        }
-
-        // Init achievements system
-        if (typeof Achievements !== 'undefined') {
-            Achievements.init();
-        }
-
-        // Init UI & First Message
-        initSuggestions();
-        setTimeout(() => {
-            showLoading();
-            setTimeout(() => {
-                removeLoading();
-                addMessage("أهلاً بيك 👋<br>تحب تفهم الفرز بيتم إزاي ولا تعرف دورك فيه؟ 👀", 'bot');
-                userContext.lastTopic = 'start';
-                updateSuggestions();
-            }, 1200);
-        }, 500);
-    }, 1500);
-
-    // ================== SIDEBAR & THEME LOGIC ==================
-    const optionsBtn = document.getElementById('options-btn');
-    const sidebarOverlay = document.getElementById('sidebar-overlay');
-    const closeSidebarBtn = document.getElementById('close-sidebar-btn');
-    
-    // Menu Buttons
-    const menuHome = document.getElementById('menu-home');
-    const menuGame = document.getElementById('menu-game');
-    const menuTheme = document.getElementById('menu-theme');
-    const menuReset = document.getElementById('menu-reset');
-    const menuAbout = document.getElementById('menu-about');
-    const themeIcon = document.getElementById('theme-icon');
-
-    // Initialize Theme Icon
-    if (document.documentElement.getAttribute('data-theme') === 'dark') {
-        if (themeIcon) themeIcon.innerText = '☀️';
-    }
-
-    function closeSidebar() {
-        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
-    }
-
-    if (optionsBtn && sidebarOverlay && closeSidebarBtn) {
-        optionsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebarOverlay.classList.add('active');
-        });
-
-        closeSidebarBtn.addEventListener('click', closeSidebar);
-        
-        // Click outside to close
-        sidebarOverlay.addEventListener('click', (e) => {
-            if (e.target === sidebarOverlay) closeSidebar();
-        });
-    }
-
-    if (menuHome) menuHome.addEventListener('click', closeSidebar);
-
-    if (menuGame) {
-        menuGame.addEventListener('click', () => {
-            closeSidebar();
-            if (window.openGameOverlay) {
-                window.openGameOverlay();
-            } else {
-                addMessage("الميزة دي لسه بتتحمل 🤔", 'bot');
-            }
-        });
-    }
-
-    // Achievements Gallery
-    const menuAchievements = document.getElementById('menu-achievements');
-    if (menuAchievements) {
-        menuAchievements.addEventListener('click', () => {
-            closeSidebar();
-            if (typeof Achievements !== 'undefined' && Achievements.openGallery) {
-                Achievements.openGallery();
-            }
-        });
-    }
-
-    if (menuTheme) {
-        menuTheme.addEventListener('click', () => {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            if (isDark) {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('farzon_theme', 'light');
-                if (themeIcon) themeIcon.innerText = '🌙';
-            } else {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('farzon_theme', 'dark');
-                if (themeIcon) themeIcon.innerText = '☀️';
-            }
-        });
-    }
-
-    if (menuReset) {
-        menuReset.addEventListener('click', () => {
-            // Confirm before reset just in case
-            if (confirm("متأكد إنك عايز تمسح ذاكرة المحادثة؟")) {
-                localStorage.removeItem('farzon_session');
-                window.location.reload();
-            }
-        });
-    }
-
-    if (menuAbout) {
-        menuAbout.addEventListener('click', () => {
-            closeSidebar();
-            addMessage("ℹ️ عن فرزون", 'user');
-            showLoading();
-            setTimeout(() => {
-                removeLoading();
-                addMessage(knowledgeBase["🤖 انت مين؟"], 'bot');
-            }, 1000);
-        });
-    }
-
-    // Input Event Listeners
-    userInput.focus();
-    sendBtn.addEventListener('click', () => handleSend(userInput.value));
-    
-    // Auto-resize and validation
-    userInput.addEventListener('input', () => {
-        sendBtn.disabled = userInput.value.trim() === '';
-        
-        // Auto resize textarea
-        userInput.style.height = 'auto';
-        userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
-    });
-
-    // Handle Enter key for Mobile vs Desktop
-    userInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-                // On mobile: Let Enter create a new line (default behavior)
-                // Do not send, only the send button sends
-                return;
-            } else {
-                // On desktop: Shift+Enter creates a new line, Enter sends
-                if (!e.shiftKey) {
-                    e.preventDefault(); // Prevent default new line
-                    handleSend(userInput.value);
-                }
-            }
-        }
-    });
-
-    function updateSuggestions() {
-        const quickSuggestions = document.getElementById('quick-suggestions');
-        if (!quickSuggestions) return;
-        quickSuggestions.innerHTML = '';
-
-        let suggestionKeys = [];
-        const topic = userContext.lastTopic;
-        
-        if (topic === 'start') {
-            suggestionKeys = ["الفرز بيعمل ايه", "عايز أشارك", "🔍 مش عارف تسأل ايه؟"];
-        } else if (topic === 'conversion_prompt') {
-            suggestionKeys = ["اه 👌", "مش دلوقتي"];
-        } else if (topic === 'conversion_success') {
-            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين"];
-        } else if (topic === 'learning_mode') {
-            suggestionKeys = ["بسرعة", "بالتفصيل"];
-        } else if (topic === 'volunteer') {
-            suggestionKeys = ["⏰ مواعيد الفرز", "👥 كل المسؤولين", "📦 الفرز بيعمل ايه؟"];
-        } else if (topic === 'sorting_explained' || topic === 'categories' || topic === 'sorting') {
-            suggestionKeys = ["يعني ايه كساء؟", "المعارض بتروح فين؟", "التالف بيتعمل بيه ايه؟", "🔍 مش عارف تسأل ايه؟"];
-        } else if (topic === 'maared_clarify') {
-            suggestionKeys = ["المعارض ايه؟", "المعارض بتروح فين؟"];
-        } else if (topic === 'kesaa_clarify') {
-            suggestionKeys = ["الكساء ايه؟", "الكساء بيتوزع ازاي؟"];
-        } else if (topic === 'roles') {
-            suggestionKeys = ["📱 مسؤول الميديا", "👥 كل المسؤولين", "🔍 مش عارف تسأل ايه؟"];
-        } else if (topic === 'schedule' || topic === 'events') {
-            suggestionKeys = ["⏰ مواعيد الفرز", "🎯 فرزاوي امتى", "🔍 مش عارف تسأل ايه؟"];
-        } else if (topic === 'resala') {
-            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "👕 يعني ايه كساء؟", "🛍️ المعارض يعني ايه؟"];
-        } else if (topic === 'rescue') {
-            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين"];
-        } else {
-            suggestionKeys = ["📦 الفرز بيعمل ايه؟", "⏰ مواعيد الفرز", "👥 كل المسؤولين", "🔍 مش عارف تسأل ايه؟"];
-        }
-
-        suggestionKeys.forEach(key => {
-            const btn = document.createElement('button');
-            btn.className = 'chip';
-            btn.innerText = key;
-            btn.addEventListener('click', () => {
-                const cleanText = key.replace(/[\u{1F300}-\u{1F9FF}\u{2700}-\u{27BF}]/gu, '').replace(/[؟?]/g, '').trim();
-                handleSend(cleanText);
-            });
-            quickSuggestions.appendChild(btn);
-        });
-    }
-
-    function initSuggestions() {
-        // Will be updated dynamically after bot messages
-    }
-
-    // Get or create a persistent session ID for the user
-    let sessionId = localStorage.getItem('farzon_session');
-    if (!sessionId) {
-        sessionId = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
-        localStorage.setItem('farzon_session', sessionId);
-    }
-
-    async function getBackendReply(message) {
-        const response = await fetch('http://localhost:3000/api/ask', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ message, sessionId })
-        });
-        const data = await response.json();
-        return data; // Return full object {reply, topic}
-    }
-
-    async function handleSend(text) {
-        text = text.trim();
-        if (text === '') return;
-
-        userInput.value = '';
-        userInput.style.height = 'auto'; // Reset textarea height
-        sendBtn.disabled = true;
-        userInput.focus();
-
-        addMessage(text, 'user');
-
-        // Track message for achievements
-        if (typeof Achievements !== 'undefined') {
-            Achievements.track('message');
-        }
-
-        // FAST INPUT PROTECTION
-        if (isLoading) removeLoading();
-        showLoading();
-        const delay = Math.floor(Math.random() * 800) + 800; // Snappier response
-
-        // Initiate backend fetch immediately (non-blocking)
-        const fetchPromise = getBackendReply(text).catch(err => {
-            console.error("Backend error:", err);
-            return null;
-        });
-
-        setTimeout(async () => {
-            let botReply;
-            const backendData = await fetchPromise;
-                
-            // if backend gives valid response → use it and update topic
-            if (backendData && backendData.reply && backendData.reply.trim() !== "") {
-                botReply = backendData.reply;
-                if (backendData.topic) {
-                    userContext.lastTopic = backendData.topic;
-                }
-            } else {
-                // fallback to old logic
-                botReply = handleMessage(text);
-            }
-
-            // Fake typing personality — occasional hesitation effect
-            if (typeof FakeTyping !== 'undefined' && FakeTyping.shouldUse(botReply)) {
-                await FakeTyping.execute(showLoading, removeLoading);
-            } else {
-                removeLoading();
-            }
-
-            addMessage(formatText(botReply), 'bot');
-            updateSuggestions();
-        }, delay);
-    }
-
-    function formatText(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/\n/g, '<br>');
-    }
-
-    function addMessage(htmlContent, sender) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${sender}-message`;
-
-        let avatarHtml = '';
-        if (sender === 'bot') {
-            avatarHtml = `<img src="./assets/images/chatbot-avatar.png" alt="فرزون" class="msg-avatar-img" onerror="this.src='./assets/images/chatbot-avatar.png'; this.onerror=null;">`;
-        }
-
-        const timeString = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-
-        messageDiv.innerHTML = `
-            ${avatarHtml}
-            <div class="message-body">
-                <div class="message-content">${htmlContent}</div>
-                <div class="message-time">${timeString}</div>
-            </div>
-        `;
-
-        chatMessages.appendChild(messageDiv);
-        scrollToBottom();
-    }
-
-    function scrollToBottom() {
-        chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
-    }
-});
+module.exports = { getBotReply };

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فرزون — لوحة التحكم</title>
+    <link rel="icon" href="../assets/images/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <!-- Password Gate -->
+    <div id="auth-gate" class="auth-gate">
+        <div class="auth-card">
+            <div class="auth-logo">🤖</div>
+            <h2>لوحة تحكم فرزون</h2>
+            <p>ادخل كلمة السر للدخول</p>
+            <input type="password" id="auth-input" placeholder="كلمة السر" autocomplete="off">
+            <button id="auth-btn">دخول</button>
+            <p id="auth-error" class="auth-error"></p>
+        </div>
+    </div>
+
+    <!-- Dashboard (hidden until auth) -->
+    <div id="dashboard" class="dashboard hidden">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-right">
+                <span class="topbar-logo">🤖</span>
+                <h1 class="topbar-title">فرزون — لوحة التحكم</h1>
+            </div>
+            <div class="topbar-left">
+                <button id="theme-toggle" class="topbar-btn" title="الوضع الليلي">🌙</button>
+                <button id="refresh-btn" class="topbar-btn" title="تحديث">🔄</button>
+                <button id="logout-btn" class="topbar-btn" title="خروج">🚪</button>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav" id="tab-nav">
+            <button class="tab active" data-tab="overview">📊 نظرة عامة</button>
+            <button class="tab" data-tab="unknown">❓ أسئلة بدون إجابة</button>
+            <button class="tab" data-tab="analytics">📈 التحليلات</button>
+            <button class="tab" data-tab="achievements">🏆 الإنجازات</button>
+            <button class="tab" data-tab="games">🎮 الألعاب</button>
+            <button class="tab" data-tab="users">👥 المستخدمين</button>
+        </nav>
+
+        <!-- Page Content -->
+        <main class="main-content">
+            <!-- Overview Page -->
+            <section id="page-overview" class="page active">
+                <div class="stats-grid" id="overview-cards">
+                    <div class="stat-card skeleton"></div>
+                    <div class="stat-card skeleton"></div>
+                    <div class="stat-card skeleton"></div>
+                    <div class="stat-card skeleton"></div>
+                    <div class="stat-card skeleton"></div>
+                    <div class="stat-card skeleton"></div>
+                </div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3>توزيع الألعاب</h3>
+                        <canvas id="chart-games"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>نشاط المستخدمين</h3>
+                        <canvas id="chart-users"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Unknown Questions Page -->
+            <section id="page-unknown" class="page">
+                <div class="page-header">
+                    <h2>❓ أسئلة بدون إجابة</h2>
+                    <span id="unknown-total" class="badge">0</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="unknown-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>السؤال</th>
+                                <th>التكرار</th>
+                                <th>أول ظهور</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unknown-tbody">
+                            <tr><td colspan="4" class="loading-cell">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="unknown-pagination"></div>
+            </section>
+
+            <!-- Analytics Page -->
+            <section id="page-analytics" class="page">
+                <div class="page-header">
+                    <h2>📈 التحليلات</h2>
+                </div>
+                <div class="stats-grid" id="analytics-cards"></div>
+                <div class="charts-row">
+                    <div class="chart-card wide">
+                        <h3>توزيع التفاعلات</h3>
+                        <canvas id="chart-engagement"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Achievements Page -->
+            <section id="page-achievements" class="page">
+                <div class="page-header">
+                    <h2>🏆 الإنجازات</h2>
+                </div>
+                <div class="stats-grid" id="achievement-cards"></div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3>توزيع الندرة</h3>
+                        <canvas id="chart-rarity"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>عدد الفاتحين لكل إنجاز</h3>
+                        <canvas id="chart-achievement-bars"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Games Page -->
+            <section id="page-games" class="page">
+                <div class="page-header">
+                    <h2>🎮 تحليلات الألعاب</h2>
+                </div>
+                <div class="stats-grid" id="game-cards"></div>
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <h3>نتائج الألعاب</h3>
+                        <canvas id="chart-game-results"></canvas>
+                    </div>
+                </div>
+                <div class="page-header" style="margin-top: 24px;">
+                    <h2>🏅 أكثر اللاعبين نشاطاً</h2>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="top-players-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>اللاعب</th>
+                                <th>الألعاب</th>
+                                <th>فوز</th>
+                                <th>خسارة</th>
+                                <th>تعادل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-players-tbody">
+                            <tr><td colspan="6" class="loading-cell">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Users Page -->
+            <section id="page-users" class="page">
+                <div class="page-header">
+                    <h2>👥 المستخدمين</h2>
+                    <span id="users-total" class="badge">0</span>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>الجلسة</th>
+                                <th>الاسم</th>
+                                <th>الزيارات</th>
+                                <th>الرسائل</th>
+                                <th>الألعاب</th>
+                                <th>آخر نشاط</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="6" class="loading-cell">جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="users-pagination"></div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
