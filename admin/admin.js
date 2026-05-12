@@ -9,10 +9,7 @@
     'use strict';
 
     // ─── Config ──────────────────────────────────────────
-    const API_ORIGIN = window.location.port === '3000'
-        ? window.location.origin
-        : 'http://localhost:3000';
-    const API_BASE = `${API_ORIGIN}/api/admin`;
+    const API_BASE = '/api/admin';
     const STORAGE_KEY = 'farzon_admin_key';
 
     // ─── DOM Cache ───────────────────────────────────────

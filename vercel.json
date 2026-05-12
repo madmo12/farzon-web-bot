@@ -7,7 +7,7 @@
     { "src": "admin/**/*", "use": "@vercel/static" }
   ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "backend/server.js" },
+    { "source": "/api/(.*)", "destination": "/backend/server.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

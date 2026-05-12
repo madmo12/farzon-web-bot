@@ -26,7 +26,7 @@ const Achievements = (() => {
     const STORAGE_KEY    = 'farzon_achievements';
     const STATS_KEY      = 'farzon_stats';
     const LAST_VISIT_KEY = 'farzon_last_visit';
-    const API_BASE       = 'http://localhost:3000/api';
+    const API_BASE       = '/api';
 
     // ─── Achievement Definitions ─────────────────────────
     // category: 'default' — future: 'rare', 'seasonal', 'event'
