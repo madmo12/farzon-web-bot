@@ -12,6 +12,8 @@ connectDB();
 
 const app = express();
 
+const publicDir = path.join(__dirname, '..', 'public');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -25,8 +27,8 @@ app.get('/api/admin/test', (req, res) => res.json({ ok: true }));
 
 app.use('/api/admin', adminRoutes);
 
-// Serve admin dashboard static files
-app.use('/admin-farzon', express.static(path.join(__dirname, '..', 'admin')));
+// Static frontend (`public/` is also Vercel's CDN root for non-API paths)
+app.use(express.static(publicDir, { index: 'index.html' }));
 
 // Local development only — Vercel handles its own HTTP layer
 if (!process.env.VERCEL) {
