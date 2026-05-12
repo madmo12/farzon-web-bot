@@ -602,6 +602,16 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => loadingScreen.remove(), 500); // Remove from DOM after transition
         }
 
+        // Render daily mood status
+        if (typeof DailyMood !== 'undefined') {
+            DailyMood.render();
+        }
+
+        // Init achievements system
+        if (typeof Achievements !== 'undefined') {
+            Achievements.init();
+        }
+
         // Init UI & First Message
         initSuggestions();
         setTimeout(() => {
@@ -660,6 +670,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.openGameOverlay();
             } else {
                 addMessage("الميزة دي لسه بتتحمل 🤔", 'bot');
+            }
+        });
+    }
+
+    // Achievements Gallery
+    const menuAchievements = document.getElementById('menu-achievements');
+    if (menuAchievements) {
+        menuAchievements.addEventListener('click', () => {
+            closeSidebar();
+            if (typeof Achievements !== 'undefined' && Achievements.openGallery) {
+                Achievements.openGallery();
             }
         });
     }
@@ -815,6 +836,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addMessage(text, 'user');
 
+        // Track message for achievements
+        if (typeof Achievements !== 'undefined') {
+            Achievements.track('message');
+        }
+
         // FAST INPUT PROTECTION
         if (isLoading) removeLoading();
         showLoading();
@@ -827,8 +853,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         setTimeout(async () => {
-            removeLoading();
-            
             let botReply;
             const backendData = await fetchPromise;
                 
@@ -841,6 +865,13 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // fallback to old logic
                 botReply = handleMessage(text);
+            }
+
+            // Fake typing personality — occasional hesitation effect
+            if (typeof FakeTyping !== 'undefined' && FakeTyping.shouldUse(botReply)) {
+                await FakeTyping.execute(showLoading, removeLoading);
+            } else {
+                removeLoading();
             }
 
             addMessage(formatText(botReply), 'bot');

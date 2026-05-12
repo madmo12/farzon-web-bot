@@ -181,6 +181,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 isGameOver = true;
                 highlightWin(combo);
                 
+                // Track game completion for achievements
+                if (typeof Achievements !== 'undefined') {
+                    const result = board[a] === playerMark ? 'win' : 'loss';
+                    Achievements.track('game', { result });
+                }
+                
                 if (board[a] === playerMark) {
                     gameStatus.innerText = getRandomGameReaction('userWin');
                 } else {
@@ -196,6 +202,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function isBoardFull() {
         if (!board.includes(null) && !isGameOver) {
             isGameOver = true;
+            // Track game completion for achievements
+            if (typeof Achievements !== 'undefined') {
+                Achievements.track('game', { result: 'draw' });
+            }
             gameStatus.innerText = getRandomGameReaction('draw');
             restartBtn.classList.remove('hidden');
             return true;
