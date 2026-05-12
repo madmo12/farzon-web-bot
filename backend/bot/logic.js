@@ -207,6 +207,41 @@ function isNegative(normalizedText) {
     return false;
 }
 
+function isNameRecallQuestion(normalizedText) {
+    return [
+        "انا مين",
+        "تعرف انا مين",
+        "عارف انا مين",
+        "انت تعرف انا مين",
+        "انت عارف انا مين",
+        "فاكرني",
+        "فكرني",
+        "انت فاكرني",
+        "تعرفني",
+        "انت تعرفني",
+        "عارفني",
+        "انت عارفني",
+        "تعرف اسمي",
+        "عارف اسمي",
+        "انت تعرف اسمي",
+        "انت عارف اسمي",
+        "اسمي ايه",
+        "اسمي اي",
+        "فاكر اسمي"
+    ].some(phrase => normalizedText.includes(phrase));
+}
+
+function isInvalidNameCandidate(name) {
+    const firstWord = normalize(name).split(' ')[0];
+    const blockedWords = [
+        "مين", "من", "ايه", "اي", "ايه؟", "ازاي", "ليه", "امتي", "امتى", "فين",
+        "عارف", "تعرف", "فاكر", "فكرني", "اسمي", "انا", "انت",
+        "عايز", "عاوز", "مش", "بحب", "بسال", "بسأل", "جاي", "كنت", "معاك"
+    ];
+
+    return blockedWords.includes(firstWord) || blockedWords.some(w => normalize(name).includes(` ${w} `));
+}
+
 function extractName(text) {
     const patterns = [
         /(?:^|\s)انا اسمي\s+([a-zA-Z\u0621-\u064A]{2,20})/i,
@@ -221,8 +256,7 @@ function extractName(text) {
         if (match && match[1]) {
             let extracted = match[1].trim();
             if (extracted.length >= 2 && extracted.length <= 20) {
-                const ignored = ["عايز", "عاوز", "مش", "بحب", "بسال", "بسأل", "جاي", "كنت", "معاك"];
-                if (!ignored.some(w => extracted.includes(w))) {
+                if (!isInvalidNameCandidate(extracted)) {
                     return extracted.split(' ')[0]; // Just take first name to keep it simple
                 }
             }
@@ -240,8 +274,12 @@ function getBotReply(text, sessionId = 'default', dbUser = null) {
     // 1) Normalize input
     const normalizedText = normalize(text);
 
-    // 1.2) Extract Name
-    const newlyExtractedName = extractName(text) || extractName(normalizedText);
+    // 1.2) Distinguish name intro from asking Farzon to remember the name
+    const isNameRecall = isNameRecallQuestion(normalizedText);
+    const newlyExtractedName = isNameRecall ? null : (extractName(text) || extractName(normalizedText));
+    if (isNameRecall) {
+        allIntents.push({ type: 'NAME_RECALL' });
+    }
     if (newlyExtractedName) {
         userContext.name = newlyExtractedName;
         allIntents.push({ type: 'NAME_INTRO' });
@@ -328,6 +366,9 @@ function getBotReply(text, sessionId = 'default', dbUser = null) {
         const matchedIntents = detectIntentsInSegment(segment, normalizedText, userContext);
         if (matchedIntents && matchedIntents.length > 0) {
             for (const intent of matchedIntents) {
+                if (isNameRecall && intent.type === 'CLARIFY_ROLE') {
+                    continue;
+                }
                 if (intent.type !== 'FALLBACK') {
                     allIntents.push(intent);
                 }
@@ -347,6 +388,7 @@ function getBotReply(text, sessionId = 'default', dbUser = null) {
 
     // Order logically: Concepts -> Roles -> Schedule -> Others
     const intentOrder = {
+        'NAME_RECALL': -3,
         'NAME_INTRO': -2,
         'GREETING': -1,
         'RESALA_INFO': 1,
@@ -400,6 +442,12 @@ function getBotReply(text, sessionId = 'default', dbUser = null) {
 
                 case 'BOT_IDENTITY':
                     res = "أنا فرزون 🤖 مساعدك الذكي هنا عشان أساعدك تعرف كل حاجة عن الفرز في جمعية رسالة بشكل بسيط وسريع 😎";
+                    userContext.lastTopic = 'start';
+                    break;
+
+                case 'NAME_RECALL':
+                    const rememberedName = userContext.name || (dbUser ? dbUser.name : '');
+                    res = rememberedName ? `أكيد فاكرك يا ${rememberedName} 😏` : "لسه مقولتليش اسمك 👀";
                     userContext.lastTopic = 'start';
                     break;
 
