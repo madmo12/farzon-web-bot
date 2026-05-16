@@ -113,7 +113,7 @@ function detectIntentsInSegment(segment, fullText, userContext) {
 
     // 3. Clarification Handling
     if (userContext.awaitingClarification) {
-        if (segment.includes("كساء")) return [{ type: 'KNOWLEDGE', key: '👕 يعني ايه كساء؟' }];
+        if (segment.includes("كساhء")) return [{ type: 'KNOWLEDGE', key: '👕 يعني ايه كساء؟' }];
         if (segment.includes("معارض")) return [{ type: 'KNOWLEDGE', key: '🛍️ المعارض يعني ايه؟' }];
     }
 
